@@ -22,7 +22,7 @@ type HTTPServer struct {
 }
 
 type PostgresConfig struct {
-	PGUrl string `env:"PG_URL" env-required:"true"`
+	PGUrl string `yaml:"PG_URL" env-required:"true"`
 }
 
 type RedisConfig struct {
