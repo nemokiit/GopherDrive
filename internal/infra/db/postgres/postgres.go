@@ -21,7 +21,7 @@ func New(connString string) (*pgxpool.Pool, error) {
 	defer cancel()
 
 	if err = pool.Ping(ctxPing); err != nil {
-		return nil, fmt.Errorf("database ping failed: %w", err)
+		return nil, fmt.Errorf("postgres database ping failed: %w", err)
 	}
 
 	return pool, nil
