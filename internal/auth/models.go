@@ -7,7 +7,7 @@ import (
 )
 
 type User struct {
-	Id           uuid.UUID
+	ID           uuid.UUID
 	Email        string
 	PasswordHash string
 	CreatedAt    time.Time

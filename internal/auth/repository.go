@@ -52,7 +52,7 @@ func (r *pgRepository) GetUserByEmail(ctx context.Context, email string) (*User,
 	var user User
 
 	query := "SELECT id, email, password_hash, created_at FROM users WHERE email = $1"
-	err := r.pool.QueryRow(ctx, query, email).Scan(&user.Id, &user.Email, &user.PasswordHash, user.CreatedAt)
+	err := r.pool.QueryRow(ctx, query, email).Scan(&user.ID, &user.Email, &user.PasswordHash, user.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("%s: %w", op, errors.New("email not found"))
