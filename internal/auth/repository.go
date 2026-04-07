@@ -11,22 +11,22 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type UserRepository interface {
+type Repository interface {
 	CreateUser(ctx context.Context, email, passwordHash string) (uuid.UUID, error)
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 }
 
-type pgUserRepository struct {
+type pgRepository struct {
 	pool *pgxpool.Pool
 }
 
-func NewRepository(pool *pgxpool.Pool) UserRepository {
-	return &pgUserRepository{
+func NewRepository(pool *pgxpool.Pool) Repository {
+	return &pgRepository{
 		pool: pool,
 	}
 }
 
-func (r *pgUserRepository) CreateUser(ctx context.Context, email, passwordHash string) (uuid.UUID, error) {
+func (r *pgRepository) CreateUser(ctx context.Context, email, passwordHash string) (uuid.UUID, error) {
 	const op = "auth.repository.CreateUser"
 
 	var userID uuid.UUID
@@ -46,7 +46,7 @@ func (r *pgUserRepository) CreateUser(ctx context.Context, email, passwordHash s
 	return userID, nil
 }
 
-func (r *pgUserRepository) GetUserByEmail(ctx context.Context, email string) (*User, error) {
+func (r *pgRepository) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	const op = "auth.repository.GetUserByEmail"
 
 	var user User
