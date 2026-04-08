@@ -36,7 +36,7 @@ func (r *pgRepository) CreateUser(ctx context.Context, email, passwordHash strin
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" {
-				return uuid.Nil, errors.New("email already exists")
+				return uuid.Nil, ErrUserAlreadyExists
 			}
 		}
 
@@ -55,7 +55,7 @@ func (r *pgRepository) GetUserByEmail(ctx context.Context, email string) (*User,
 	err := r.pool.QueryRow(ctx, query, email).Scan(&user.ID, &user.Email, &user.PasswordHash, user.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("%s: %w", op, errors.New("email not found"))
+			return nil, fmt.Errorf("%s: %w", op, ErrUserNotFound)
 		}
 
 		return nil, fmt.Errorf("%s: %w", op, err)

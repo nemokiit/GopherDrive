@@ -57,7 +57,7 @@ func (s *service) Login(ctx context.Context, email string, password string) (uui
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return uuid.Nil, fmt.Errorf("%s: %w", op, errors.New("invalid credentials"))
+			return uuid.Nil, fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
 		}
 
 		return uuid.Nil, fmt.Errorf("%s: %w", op, err)
