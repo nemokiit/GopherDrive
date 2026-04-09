@@ -9,10 +9,10 @@ import (
 )
 
 type Config struct {
-	Env        string `yaml:"env"`
-	HTTPServer `yaml:"http_server"`
-	PostgresConfig
-	RedisConfig
+	Env            string `yaml:"env"`
+	HTTPServer     `yaml:"http_server"`
+	PostgresConfig `yaml:"postgres_config"`
+	RedisConfig    `yaml:"redis_config"`
 }
 
 type HTTPServer struct {
@@ -22,12 +22,12 @@ type HTTPServer struct {
 }
 
 type PostgresConfig struct {
-	PGUrl string `yaml:"PG_URL" env-required:"true"`
+	PostgresURL string `yaml:"pg_url" env-required:"true"`
 }
 
 type RedisConfig struct {
-	RedisAddr string `env:"REDIS_ADDR" env-required:"true"`
-	RedisPass string `env:"REDIS_PASS"`
+	RedisAddr string `yaml:"redis_addr" env-required:"true"`
+	RedisPass string `yaml:"redis_pass"`
 }
 
 func MustLoad() *Config {

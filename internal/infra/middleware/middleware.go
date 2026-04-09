@@ -8,8 +8,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func NewLogger(log *slog.Logger) func(next http.HandlerFunc) http.Handler {
-	return func(next http.HandlerFunc) http.Handler {
+func NewLogger(log *slog.Logger) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
 		log = log.With(slog.String("component", "middleware/logger"))
 		log.Info("logger middleware enabled")
 

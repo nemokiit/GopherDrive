@@ -1,7 +1,5 @@
 package response
 
-import "log/slog"
-
 const (
 	statusOK    = "OK"
 	statusError = "Error"
@@ -22,12 +20,5 @@ func Error(err string) Response {
 func OK() Response {
 	return Response{
 		Status: statusOK,
-	}
-}
-
-func SlogErr(err error) slog.Attr {
-	return slog.Attr{
-		Key:   "error",
-		Value: slog.StringValue(err.Error()),
 	}
 }
