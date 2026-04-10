@@ -2,9 +2,9 @@ package handler
 
 import (
 	"GopherDrive/internal/auth"
-	"GopherDrive/internal/auth/service"
 	"GopherDrive/internal/lib/api/logger"
 	"GopherDrive/internal/lib/api/response"
+	"context"
 	"errors"
 	"io"
 	"log/slog"
@@ -14,6 +14,11 @@ import (
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 )
+
+type Service interface {
+	Register(ctx context.Context, email string, password string) (uuid.UUID, error)
+	Login(ctx context.Context, email string, password string) (uuid.UUID, string, string, error)
+}
 
 type Request struct {
 	Email    string `json:"email"`
@@ -26,11 +31,11 @@ type Response struct {
 }
 
 type Handler struct {
-	service service.Service
+	service Service
 	log     *slog.Logger
 }
 
-func NewHandler(service service.Service, log *slog.Logger) *Handler {
+func New(service Service, log *slog.Logger) *Handler {
 	return &Handler{
 		service: service,
 		log:     log,

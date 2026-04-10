@@ -2,33 +2,41 @@ package service
 
 import (
 	"GopherDrive/internal/auth"
-	"GopherDrive/internal/auth/repository"
 	"context"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type Service interface {
-	Register(ctx context.Context, email string, password string) (uuid.UUID, error)
-	Login(ctx context.Context, email string, password string) (uuid.UUID, error)
+type UserRepo interface {
+	CreateUser(ctx context.Context, email, passwordHash string) (uuid.UUID, error)
+	GetUserByEmail(ctx context.Context, email string) (*auth.User, error)
 }
 
-type service struct {
-	repo repository.Repository
+type sessionRepo interface {
+	SaveRefreshToken(ctx context.Context, token string, userID uuid.UUID, ttl time.Duration) error
+	GetUserIDByToken(ctx context.Context, token string) (uuid.UUID, error)
+	DeleteRefreshToken(ctx context.Context, token string) error
 }
 
-func NewService(repo repository.Repository) Service {
-	return &service{
-		repo: repo,
+type Service struct {
+	users    UserRepo
+	sessions SessionRepo
+}
+
+func New(u UserRepo, s SessionRepo) *Service {
+	return &Service{
+		users:    u,
+		sessions: s,
 	}
 }
 
-func (s *service) Register(ctx context.Context, email string, password string) (uuid.UUID, error) {
+func (s *Service) Register(ctx context.Context, email string, password string) (uuid.UUID, error) {
 	const op = "auth.service.Register"
 
 	if err := isValidEmail(email); err != nil {
@@ -40,7 +48,7 @@ func (s *service) Register(ctx context.Context, email string, password string) (
 		return uuid.Nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	id, err := s.repo.CreateUser(ctx, email, string(passwordHash))
+	id, err := s.users.CreateUser(ctx, email, string(passwordHash))
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -48,10 +56,10 @@ func (s *service) Register(ctx context.Context, email string, password string) (
 	return id, nil
 }
 
-func (s *service) Login(ctx context.Context, email string, password string) (uuid.UUID, error) {
+func (s *Service) Login(ctx context.Context, email string, password string) (uuid.UUID, error) {
 	const op = "auth.service.Login"
 
-	user, err := s.repo.GetUserByEmail(ctx, email)
+	user, err := s.users.GetUserByEmail(ctx, email)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("%s: %w", op, err)
 	}
