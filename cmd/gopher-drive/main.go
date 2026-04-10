@@ -1,7 +1,9 @@
 package main
 
 import (
-	"GopherDrive/internal/auth"
+	"GopherDrive/internal/auth/handler"
+	"GopherDrive/internal/auth/repository"
+	"GopherDrive/internal/auth/service"
 	"GopherDrive/internal/infra/config"
 	"GopherDrive/internal/infra/db/postgres"
 	"GopherDrive/internal/infra/db/redis"
@@ -35,12 +37,12 @@ func main() {
 	}
 	defer postgresDB.Close()
 
-	redisDB, err := redis.New(cfg.RedisAddr, cfg.RedisPass)
+	redisCli, err := redis.New(cfg.RedisAddr, cfg.RedisPass)
 	if err != nil {
 		log.Error("failed to init redis DB", sl.SlogErr(err))
 		os.Exit(1)
 	}
-	defer func() { _ = redisDB.Close() }()
+	defer func() { _ = redisCli.Close() }()
 
 	router := chi.NewRouter()
 
@@ -49,9 +51,9 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	authRepository := auth.NewRepository(postgresDB)
-	authService := auth.NewService(authRepository)
-	authHandlers := auth.NewHandler(authService, log)
+	authPostgresRepository := repository.NewPostgresRepository(postgresDB)
+	authService := service.NewService(authPostgresRepository)
+	authHandlers := handler.NewHandler(authService, log)
 
 	router.Route("/user", func(r chi.Router) {
 		r.Post("/register", authHandlers.Register)

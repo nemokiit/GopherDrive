@@ -1,6 +1,8 @@
-package auth
+package service
 
 import (
+	"GopherDrive/internal/auth"
+	"GopherDrive/internal/auth/repository"
 	"context"
 	"errors"
 	"fmt"
@@ -17,10 +19,10 @@ type Service interface {
 }
 
 type service struct {
-	repo Repository
+	repo repository.Repository
 }
 
-func NewService(repo Repository) Service {
+func NewService(repo repository.Repository) Service {
 	return &service{
 		repo: repo,
 	}
@@ -57,7 +59,7 @@ func (s *service) Login(ctx context.Context, email string, password string) (uui
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return uuid.Nil, fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
+			return uuid.Nil, fmt.Errorf("%s: %w", op, auth.ErrInvalidCredentials)
 		}
 
 		return uuid.Nil, fmt.Errorf("%s: %w", op, err)

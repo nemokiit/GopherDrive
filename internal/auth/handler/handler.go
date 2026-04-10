@@ -1,6 +1,8 @@
-package auth
+package handler
 
 import (
+	"GopherDrive/internal/auth"
+	"GopherDrive/internal/auth/service"
 	"GopherDrive/internal/lib/api/logger"
 	"GopherDrive/internal/lib/api/response"
 	"errors"
@@ -24,11 +26,11 @@ type Response struct {
 }
 
 type Handler struct {
-	service Service
+	service service.Service
 	log     *slog.Logger
 }
 
-func NewHandler(service Service, log *slog.Logger) *Handler {
+func NewHandler(service service.Service, log *slog.Logger) *Handler {
 	return &Handler{
 		service: service,
 		log:     log,
@@ -64,7 +66,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	log.Info("request body decoded", slog.Any("email", req.Email))
 
 	id, err := h.service.Register(r.Context(), req.Email, req.Password)
-	if errors.Is(err, ErrUserAlreadyExists) {
+	if errors.Is(err, auth.ErrUserAlreadyExists) {
 		log.Info("user already exists", slog.String("email", req.Email))
 
 		render.Status(r, http.StatusConflict)
@@ -118,9 +120,9 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.service.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
-		if errors.Is(err, ErrUserNotFound) {
+		if errors.Is(err, auth.ErrUserNotFound) {
 			log.Info("user not found", slog.String("email", req.Email))
-		} else if errors.Is(err, ErrInvalidCredentials) {
+		} else if errors.Is(err, auth.ErrInvalidCredentials) {
 			log.Info("invalid password")
 		} else {
 			log.Error("failed to login user", logger.SlogErr(err))

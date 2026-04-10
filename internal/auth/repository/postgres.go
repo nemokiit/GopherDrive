@@ -1,6 +1,7 @@
-package auth
+package repository
 
 import (
+	"GopherDrive/internal/auth"
 	"context"
 	"errors"
 	"fmt"
@@ -13,30 +14,30 @@ import (
 
 type Repository interface {
 	CreateUser(ctx context.Context, email, passwordHash string) (uuid.UUID, error)
-	GetUserByEmail(ctx context.Context, email string) (*User, error)
+	GetUserByEmail(ctx context.Context, email string) (*auth.User, error)
 }
 
-type pgRepository struct {
-	pool *pgxpool.Pool
+type repository struct {
+	poolPG *pgxpool.Pool
 }
 
-func NewRepository(pool *pgxpool.Pool) Repository {
-	return &pgRepository{
-		pool: pool,
+func NewPostgresRepository(poolPG *pgxpool.Pool) Repository {
+	return &repository{
+		poolPG: poolPG,
 	}
 }
 
-func (r *pgRepository) CreateUser(ctx context.Context, email, passwordHash string) (uuid.UUID, error) {
+func (r *repository) CreateUser(ctx context.Context, email, passwordHash string) (uuid.UUID, error) {
 	const op = "auth.repository.CreateUser"
 
 	var userID uuid.UUID
 
 	query := "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id"
-	err := r.pool.QueryRow(ctx, query, email, passwordHash).Scan(&userID)
+	err := r.poolPG.QueryRow(ctx, query, email, passwordHash).Scan(&userID)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" {
-				return uuid.Nil, ErrUserAlreadyExists
+				return uuid.Nil, auth.ErrUserNotFound
 			}
 		}
 
@@ -46,16 +47,16 @@ func (r *pgRepository) CreateUser(ctx context.Context, email, passwordHash strin
 	return userID, nil
 }
 
-func (r *pgRepository) GetUserByEmail(ctx context.Context, email string) (*User, error) {
+func (r *repository) GetUserByEmail(ctx context.Context, email string) (*auth.User, error) {
 	const op = "auth.repository.GetUserByEmail"
 
-	var user User
+	var user auth.User
 
 	query := "SELECT id, email, password_hash, created_at FROM users WHERE email = $1"
-	err := r.pool.QueryRow(ctx, query, email).Scan(&user.ID, &user.Email, &user.PasswordHash, user.CreatedAt)
+	err := r.poolPG.QueryRow(ctx, query, email).Scan(&user.ID, &user.Email, &user.PasswordHash, user.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("%s: %w", op, ErrUserNotFound)
+			return nil, fmt.Errorf("%s: %w", op, auth.ErrUserNotFound)
 		}
 
 		return nil, fmt.Errorf("%s: %w", op, err)
