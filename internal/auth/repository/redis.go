@@ -58,7 +58,7 @@ func (r *RedisRepository) GetUserIDByToken(ctx context.Context, token string) (u
 	return id, nil
 }
 
-func (r *RedisRepository) DeleteToken(ctx context.Context, token string) error {
+func (r *RedisRepository) DeleteRefreshToken(ctx context.Context, token string) error {
 	const op = "auth.repository.DeleteToken"
 
 	key := fmt.Sprintf("refresh_token:%s", token)
