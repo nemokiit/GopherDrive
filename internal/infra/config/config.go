@@ -9,7 +9,9 @@ import (
 )
 
 type Config struct {
-	Env            string `yaml:"env"`
+	Env         string `yaml:"env"`
+	SecretToken string `yaml:"secret_token"`
+
 	HTTPServer     `yaml:"http_server"`
 	PostgresConfig `yaml:"postgres_config"`
 	RedisConfig    `yaml:"redis_config"`
