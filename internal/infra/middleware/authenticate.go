@@ -3,7 +3,7 @@ package middleware
 import (
 	"GopherDrive/internal/lib/api/logger"
 	"GopherDrive/internal/lib/api/response"
-	"GopherDrive/internal/lib/jwt/tokens"
+	"GopherDrive/internal/lib/tokens"
 	"context"
 	"errors"
 	"fmt"
