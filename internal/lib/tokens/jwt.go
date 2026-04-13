@@ -1,8 +1,6 @@
-package jwt
+package tokens
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"time"
@@ -10,19 +8,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
-
-func GenerateRefreshToken() (string, error) {
-	const op = "lib.jwt.GenerateRefreshToken"
-
-	bytes := make([]byte, 32)
-
-	_, err := rand.Read(bytes)
-	if err != nil {
-		return "", fmt.Errorf("%s: %w", op, err)
-	}
-
-	return hex.EncodeToString(bytes), nil
-}
 
 func GenerateAccessToken(secretKey string, id uuid.UUID, ttl time.Duration) (string, error) {
 	const op = "lib.jwt.GenerateAccessToken"
