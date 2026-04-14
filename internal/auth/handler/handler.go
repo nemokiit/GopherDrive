@@ -16,8 +16,9 @@ import (
 )
 
 type Service interface {
-	Register(ctx context.Context, email string, password string) (uuid.UUID, error)
+	Register(ctx context.Context, email string, password string) (uuid.UUID, string, string, error)
 	Login(ctx context.Context, email string, password string) (uuid.UUID, string, string, error)
+	Refresh(ctx context.Context, cookie string) (uuid.UUID, string, string, error)
 }
 
 type Request struct {
@@ -27,7 +28,8 @@ type Request struct {
 
 type Response struct {
 	response.Response
-	ID uuid.UUID `json:"id"`
+	AccessToken string    `json:"access_token"`
+	ID          uuid.UUID `json:"id"`
 }
 
 type Handler struct {
@@ -70,7 +72,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	log.Info("request body decoded", slog.Any("email", req.Email))
 
-	id, err := h.service.Register(r.Context(), req.Email, req.Password)
+	id, accessToken, refreshToken, err := h.service.Register(r.Context(), req.Email, req.Password)
 	if errors.Is(err, auth.ErrUserAlreadyExists) {
 		log.Info("user already exists", slog.String("email", req.Email))
 
@@ -88,10 +90,14 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	log.Info("user registered", slog.Any("id", id))
 
+	cookie := getCookie("refresh_token", refreshToken, 24*60*60)
+	http.SetCookie(w, cookie)
+
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, Response{
-		Response: response.OK(),
-		ID:       id,
+		Response:    response.OK(),
+		AccessToken: accessToken,
+		ID:          id,
 	})
 }
 
@@ -123,7 +129,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	log.Info("request body decoded", slog.Any("email", req.Email))
 
-	id, err := h.service.Login(r.Context(), req.Email, req.Password)
+	id, accessToken, refreshToken, err := h.service.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
 		if errors.Is(err, auth.ErrUserNotFound) {
 			log.Info("user not found", slog.String("email", req.Email))
@@ -144,9 +150,79 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	log.Info("user logged", slog.Any("id", id))
 
+	cookie := getCookie("refresh_token", refreshToken, 24*60*60)
+	http.SetCookie(w, cookie)
+
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, Response{
-		Response: response.OK(),
-		ID:       id,
+		Response:    response.OK(),
+		AccessToken: accessToken,
+		ID:          id,
 	})
+}
+
+func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
+	const op = "auth.handler.Refresh"
+
+	log := h.log.With(
+		slog.String("op", op),
+		slog.String("request_id", middleware.GetReqID(r.Context())),
+	)
+
+	cookieReq, err := r.Cookie("refresh_token")
+	if err != nil {
+		log.Info("cookie missing", logger.SlogErr(err))
+
+		render.Status(r, http.StatusUnauthorized)
+		render.JSON(w, r, response.Error("missing refresh token"))
+		return
+	}
+
+	id, accessToken, refreshToken, err := h.service.Refresh(r.Context(), cookieReq.Value)
+	if errors.Is(err, auth.ErrTokenNotFound) {
+		log.Info("unauthorized refresh token")
+
+		deleteCookie := &http.Cookie{
+			Name:   "refresh_token",
+			MaxAge: -1,
+			Path:   "/",
+		}
+		
+		http.SetCookie(w, deleteCookie)
+
+		render.Status(r, http.StatusUnauthorized)
+		render.JSON(w, r, response.Error("unauthorized cookie"))
+		return
+	}
+	if err != nil {
+		log.Error("failed to refresh user", logger.SlogErr(err))
+
+		render.Status(r, http.StatusInternalServerError)
+		render.JSON(w, r, response.Error("failed to refresh user"))
+		return
+	}
+
+	log.Info("user refreshed", slog.Any("id", id))
+
+	cookie := getCookie("refresh_token", refreshToken, 24*60*60)
+	http.SetCookie(w, cookie)
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, Response{
+		Response:    response.OK(),
+		AccessToken: accessToken,
+		ID:          id,
+	})
+}
+
+func getCookie(name string, value string, ttl int) *http.Cookie {
+	return &http.Cookie{
+		Name:     name,
+		Value:    value,
+		Path:     "/",
+		MaxAge:   ttl,
+		Secure:   false,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	}
 }
