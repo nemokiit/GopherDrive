@@ -32,7 +32,7 @@ func (r *PGRepository) CreateUser(ctx context.Context, email, passwordHash strin
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" {
-				return uuid.Nil, auth.ErrUserNotFound
+				return uuid.Nil, fmt.Errorf("%s: %w", op, auth.ErrUserNotFound)
 			}
 		}
 
