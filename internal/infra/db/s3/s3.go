@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-func New(addr, user, password string) (*s3.Client, error) {
+func New(addr, user, password, bucketName string) (*s3.Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -32,9 +32,26 @@ func New(addr, user, password string) (*s3.Client, error) {
 	ctxPing, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	_, err = s3Cli.ListBuckets(ctxPing, &s3.ListBucketsInput{})
+	buckets, err := s3Cli.ListBuckets(ctxPing, &s3.ListBucketsInput{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to s3 (ping): %w", err)
+	}
+
+	exists := false
+	for _, bucket := range buckets.Buckets {
+		if aws.ToString(bucket.Name) == bucketName {
+			exists = true
+			break
+		}
+	}
+
+	if !exists {
+		_, err = s3Cli.CreateBucket(ctx, &s3.CreateBucketInput{
+			Bucket: aws.String(bucketName),
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create bucket: %w", err)
+		}
 	}
 
 	return s3Cli, nil
