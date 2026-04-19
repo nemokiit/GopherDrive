@@ -8,7 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func New(addr string, pass string) (*redis.Client, error) {
+func New(addr, pass string) (*redis.Client, error) {
 	redisCli := redis.NewClient(&redis.Options{
 		Addr:     addr,
 		Password: pass,
