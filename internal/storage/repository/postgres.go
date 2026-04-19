@@ -22,63 +22,67 @@ func NewPostgresRepo(pool *pgxpool.Pool) *PGRepository {
 	}
 }
 
-func (r *PGRepository) CreateFolder(ctx context.Context, folder *storage.Folder) (uuid.UUID, error) {
+func (r *PGRepository) CreateFolder(ctx context.Context, folder *storage.Folder) (*storage.Folder, error) {
 	const op = "storage.repository.CreateFolder"
 
-	var folderID uuid.UUID
+	var newFolder storage.Folder
 
-	query := "INSERT INTO folders (name, user_id, parent_folder_id) VALUES ($1, $2, $3) RETURNING id"
-	err := r.pool.QueryRow(ctx, query, folder.Name, folder.UserID, folder.ParentFolderID).Scan(&folderID)
+	query := "INSERT INTO folders (name, user_id, parent_folder_id) VALUES ($1, $2, $3) RETURNING *"
+	row := r.pool.QueryRow(ctx, query, folder.Name, folder.UserID, folder.ParentFolderID)
+
+	err := row.Scan(&newFolder.ID, &newFolder.Name, &newFolder.UserID, &newFolder.ParentFolderID, &newFolder.CreatedAt)
 	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		if pgErr.Code == "23505" {
-			return uuid.Nil, fmt.Errorf("%s: %w", op, storage.ErrFolderAlreadyExists)
+			return nil, fmt.Errorf("%s: %w", op, storage.ErrFolderAlreadyExists)
 		}
 		if pgErr.Code == "23503" {
 			switch pgErr.ConstraintName {
 			case "folders_user_id_fkey":
-				return uuid.Nil, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
+				return nil, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
 			case "folders_parent_folder_id_fkey":
-				return uuid.Nil, fmt.Errorf("%s: %w", op, storage.ErrParentFolderNotFound)
+				return nil, fmt.Errorf("%s: %w", op, storage.ErrParentFolderNotFound)
 			default:
-				return uuid.Nil, fmt.Errorf("%s: foreign key violation for %s", op, pgErr.ConstraintName)
+				return nil, fmt.Errorf("%s: foreign key violation for %s", op, pgErr.ConstraintName)
 			}
 		}
 	}
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("%s: %w", op, err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return folderID, nil
+	return &newFolder, nil
 }
 
-func (r *PGRepository) CreateFile(ctx context.Context, file *storage.File) (uuid.UUID, error) {
+func (r *PGRepository) CreateFile(ctx context.Context, file *storage.File) (*storage.File, error) {
 	const op = "storage.repository.CreateFile"
 
-	var fileID uuid.UUID
+	var newFile storage.File
 
 	query := `INSERT INTO files (name, user_id, folder_id, s3_key, size, content_type)
-              VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
-	err := r.pool.QueryRow(ctx, query, file.Name, file.UserID, file.FolderID, file.S3Key, file.Size, file.ContentType).Scan(&fileID)
+              VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`
+	row := r.pool.QueryRow(ctx, query, file.Name, file.UserID, file.FolderID, file.S3Key, file.Size, file.ContentType)
+
+	err := fillFile(&newFile, row)
 	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		if pgErr.Code == "23505" {
-			return uuid.Nil, fmt.Errorf("%s: %w", op, storage.ErrFileAlreadyExists)
+			return nil, fmt.Errorf("%s: %w", op, storage.ErrFileAlreadyExists)
 		}
 		if pgErr.Code == "23503" {
 			switch pgErr.ConstraintName {
 			case "files_user_id_fkey":
-				return uuid.Nil, fmt.Errorf("%s: %w", op, storage.ErrFileNotFound)
+				return nil, fmt.Errorf("%s: %w", op, storage.ErrFileNotFound)
 			case "files_folder_id_fkey":
-				return uuid.Nil, fmt.Errorf("%s: %w", op, storage.ErrFolderNotFound)
+				return nil, fmt.Errorf("%s: %w", op, storage.ErrFolderNotFound)
 			default:
-				return uuid.Nil, fmt.Errorf("%s: foreign key violation for %s", op, pgErr.ConstraintName)
+				return nil, fmt.Errorf("%s: foreign key violation for %s", op, pgErr.ConstraintName)
 			}
 		}
 	}
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("%s: %w", op, err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return fileID, nil
+	return &newFile, nil
 }
 
 func (r *PGRepository) GetFolderContent(ctx context.Context, userID uuid.UUID, folderID *uuid.UUID) (*storage.FolderContent, error) {
