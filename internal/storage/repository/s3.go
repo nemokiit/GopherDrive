@@ -38,6 +38,20 @@ func (r *S3Repository) UploadFile(ctx context.Context, key string, reader io.Rea
 	return nil
 }
 
+func (r *S3Repository) DownloadFile(ctx context.Context, key string) (io.ReadCloser, error) {
+	const op = "storage.repository.DownloadFile"
+
+	getObj, err := r.s3Cli.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(r.bucketName),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	
+	return getObj.Body, nil
+}
+
 func (r *S3Repository) DeleteFile(ctx context.Context, key string) error {
 	const op = "storage.repository.DeleteFile"
 
