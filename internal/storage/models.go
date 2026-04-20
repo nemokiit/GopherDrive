@@ -8,14 +8,17 @@ import (
 )
 
 var (
-	ErrFileAlreadyExists   = errors.New("user already exists")
-	ErrFolderAlreadyExists = errors.New("folder already exists")
-
+	ErrFileAlreadyExists    = errors.New("file already exists")
+	ErrFolderAlreadyExists  = errors.New("folder already exists")
 	ErrUserNotFound         = errors.New("user not found")
 	ErrParentFolderNotFound = errors.New("parent folder not found")
+	ErrFileNotFound         = errors.New("file not found")
+	ErrFolderNotFound       = errors.New("folder not found")
 
-	ErrFileNotFound   = errors.New("file not found")
-	ErrFolderNotFound = errors.New("folder not found")
+	ErrStorageCleanupFailed = errors.New("failed to cleanup storage after database error")
+	ErrDeleteCleanupFailed  = errors.New("record deleted from database, but failed to remove object from storage")
+
+	ErrNameIsEmpty = errors.New("name must not be empty")
 )
 
 type File struct {
