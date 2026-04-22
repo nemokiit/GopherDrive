@@ -70,7 +70,7 @@ func (r *PGRepository) CreateFile(ctx context.Context, file *storage.File) (*sto
 		if pgErr.Code == "23503" {
 			switch pgErr.ConstraintName {
 			case "files_user_id_fkey":
-				return nil, fmt.Errorf("%s: %w", op, storage.ErrFileNotFound)
+				return nil, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
 			case "files_folder_id_fkey":
 				return nil, fmt.Errorf("%s: %w", op, storage.ErrFolderNotFound)
 			default:
