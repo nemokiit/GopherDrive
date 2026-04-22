@@ -21,7 +21,7 @@ type MetadataRepository interface {
 }
 
 type ObjectStorage interface {
-	UploadFile(ctx context.Context, key string, reader io.Reader, size int64, contentType string) error
+	UploadFile(ctx context.Context, key string, reader io.Reader, contentType string) (int64, error)
 	DownloadFile(ctx context.Context, key string) (io.ReadCloser, error)
 	DeleteFile(ctx context.Context, key string) error
 	DeleteFiles(ctx context.Context, files []string) error
@@ -48,10 +48,12 @@ func (s *Service) CreateFile(ctx context.Context, reader io.Reader, file *storag
 
 	file.S3Key = uuid.New().String()
 
-	err := s.storage.UploadFile(ctx, file.S3Key, reader, file.Size, file.ContentType)
+	size, err := s.storage.UploadFile(ctx, file.S3Key, reader, file.ContentType)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
+
+	file.Size = size
 
 	newFile, err := s.repo.CreateFile(ctx, file)
 	if err != nil {

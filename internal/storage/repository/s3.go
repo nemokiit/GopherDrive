@@ -32,20 +32,20 @@ func NewS3Repo(s3Cli *s3.Client, bucketName string) *S3Repository {
 	}
 }
 
-func (r *S3Repository) UploadFile(ctx context.Context, key string, reader io.Reader, contentType string) error {
+func (r *S3Repository) UploadFile(ctx context.Context, key string, reader io.Reader, contentType string) (int64, error) {
 	const op = "storage.repository.UploadFile"
 
-	_, err := r.uploader.UploadObject(ctx, &transfermanager.UploadObjectInput{
+	objOutput, err := r.uploader.UploadObject(ctx, &transfermanager.UploadObjectInput{
 		Bucket:      aws.String(r.bucketName),
 		Key:         aws.String(key),
 		Body:        reader,
 		ContentType: aws.String(contentType),
 	})
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return nil
+	return aws.ToInt64(objOutput.Size), nil
 }
 
 func (r *S3Repository) DownloadFile(ctx context.Context, key string) (io.ReadCloser, error) {
