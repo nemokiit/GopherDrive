@@ -103,8 +103,8 @@ func (r *PGRepository) GetFolderContent(ctx context.Context, userID uuid.UUID, f
 	defer folderRows.Close()
 
 	folderContent := storage.FolderContent{
-		Files:   make([]storage.File, 0),
-		Folders: make([]storage.Folder, 0),
+		Files:   make([]*storage.File, 0),
+		Folders: make([]*storage.Folder, 0),
 	}
 
 	for fileRows.Next() {
@@ -115,7 +115,7 @@ func (r *PGRepository) GetFolderContent(ctx context.Context, userID uuid.UUID, f
 			return nil, fmt.Errorf("%s: %w", op, err)
 		}
 
-		folderContent.Files = append(folderContent.Files, file)
+		folderContent.Files = append(folderContent.Files, &file)
 	}
 
 	if err = fileRows.Err(); err != nil {
@@ -130,7 +130,7 @@ func (r *PGRepository) GetFolderContent(ctx context.Context, userID uuid.UUID, f
 			return nil, fmt.Errorf("%s: %w", op, err)
 		}
 
-		folderContent.Folders = append(folderContent.Folders, folder)
+		folderContent.Folders = append(folderContent.Folders, &folder)
 	}
 
 	if err = folderRows.Err(); err != nil {

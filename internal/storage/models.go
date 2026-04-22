@@ -41,6 +41,6 @@ type Folder struct {
 }
 
 type FolderContent struct {
-	Files   []File
-	Folders []Folder
+	Files   []*File   `json:"files"`
+	Folders []*Folder `json:"folders"`
 }
