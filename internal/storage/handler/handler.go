@@ -131,6 +131,11 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("file part is missing"))
+
+			log.Info("empty file name", logger.SlogErr(err))
+
+			render.Status(r, http.StatusBadRequest)
+			render.JSON(w, r, response.Error("file name is empty"))
 		default:
 			log.Error("failed to upload file", logger.SlogErr(err))
 
@@ -263,6 +268,7 @@ func (h *Handler) CreateFolder(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	folder.Name = req.Name
 
 	log.Info("request body decoded", slog.String("folder_id", req.ParentFolderID))
 
