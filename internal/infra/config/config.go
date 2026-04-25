@@ -9,12 +9,13 @@ import (
 )
 
 type Config struct {
-	Env         string `yaml:"env"`
-	SecretToken string `yaml:"secret_token"`
+	Env         string `yaml:"env" env-required:"true"`
+	SecretToken string `yaml:"secret_token" env-required:"true"`
 
 	HTTPServer     `yaml:"http_server"`
 	PostgresConfig `yaml:"postgres_config"`
 	RedisConfig    `yaml:"redis_config"`
+	S3Config       `yaml:"minio_config"`
 }
 
 type HTTPServer struct {
@@ -30,6 +31,13 @@ type PostgresConfig struct {
 type RedisConfig struct {
 	RedisAddr string `yaml:"redis_addr" env-required:"true"`
 	RedisPass string `yaml:"redis_pass"`
+}
+
+type S3Config struct {
+	MinioAddr  string `yaml:"minio_addr" env-required:"true"`
+	BucketName string `yaml:"bucket_name"`
+	MinioUser  string `yaml:"minio_root_user"`
+	MinioPass  string `yaml:"minio_root_password"`
 }
 
 func MustLoad() *Config {
