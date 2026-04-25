@@ -21,7 +21,7 @@ type MetadataRepository interface {
 }
 
 type ObjectStorage interface {
-	UploadFile(ctx context.Context, key string, reader io.Reader, contentType string) (int64, error)
+	UploadFile(ctx context.Context, key string, reader io.Reader, contentType string) error
 	DownloadFile(ctx context.Context, key string) (io.ReadCloser, error)
 	DeleteFile(ctx context.Context, key string) error
 	DeleteFiles(ctx context.Context, files []string) error
@@ -30,6 +30,11 @@ type ObjectStorage interface {
 type Service struct {
 	repo    MetadataRepository
 	storage ObjectStorage
+}
+
+type sizeCounter struct {
+	source io.Reader
+	size   int64
 }
 
 func New(repo MetadataRepository, storage ObjectStorage) *Service {
@@ -48,12 +53,14 @@ func (s *Service) CreateFile(ctx context.Context, reader io.Reader, file *storag
 
 	file.S3Key = uuid.New().String()
 
-	size, err := s.storage.UploadFile(ctx, file.S3Key, reader, file.ContentType)
+	wrappedReader := &sizeCounter{source: reader}
+
+	err := s.storage.UploadFile(ctx, file.S3Key, wrappedReader, file.ContentType)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	file.Size = size
+	file.Size = wrappedReader.size
 
 	newFile, err := s.repo.CreateFile(ctx, file)
 	if err != nil {
@@ -147,6 +154,12 @@ func (s *Service) DeleteFolder(ctx context.Context, userID uuid.UUID, folderID u
 	}
 
 	return files, nil
+}
+
+func (sc *sizeCounter) Read(p []byte) (int, error) {
+	n, err := sc.source.Read(p)
+	sc.size += int64(n)
+	return n, err
 }
 
 func isValidName(name string) error {
