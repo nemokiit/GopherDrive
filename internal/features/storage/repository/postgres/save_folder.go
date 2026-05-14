@@ -2,7 +2,7 @@ package postgres
 
 import (
 	core_domain "GopherDrive/internal/core/domain"
-	core_errors "GopherDrive/internal/core/errors"
+	"GopherDrive/internal/core/repository/postgres/pool"
 	"context"
 	"errors"
 	"fmt"
@@ -18,13 +18,13 @@ func (r *Repository) SaveFolder(ctx context.Context, folder core_domain.Folder) 
 	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		switch pgErr.Code {
 		case "23505":
-			return fmt.Errorf("%s: %w", op, core_errors.ErrFolderAlreadyExists)
+			return fmt.Errorf("%s: %w", op, pool.ErrFolderAlreadyExists)
 		case "23503":
 			switch pgErr.ConstraintName {
 			case "folders_user_id_fkey":
-				return fmt.Errorf("%s: %w", op, core_errors.ErrUserNotFound)
+				return fmt.Errorf("%s: %w", op, pool.ErrUserNotFound)
 			case "folders_parent_folder_id_fkey":
-				return fmt.Errorf("%s: %w", op, core_errors.ErrParentFolderNotFound)
+				return fmt.Errorf("%s: %w", op, pool.ErrParentFolderNotFound)
 			default:
 				return fmt.Errorf("%s: foreign key violation for %s", op, pgErr.ConstraintName)
 			}

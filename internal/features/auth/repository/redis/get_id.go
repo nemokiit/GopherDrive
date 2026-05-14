@@ -1,7 +1,7 @@
 package redis
 
 import (
-	core_errors "GopherDrive/internal/core/errors"
+	repositoryRedis "GopherDrive/internal/core/repository/redis"
 	"context"
 	"errors"
 	"fmt"
@@ -20,7 +20,7 @@ func (r *Repository) GetUserIDByToken(ctx context.Context, token string) (uuid.U
 	err := r.redisCli.Get(ctx, key).Scan(&strID)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return uuid.Nil, core_errors.ErrTokenNotFound
+			return uuid.Nil, repositoryRedis.ErrTokenNotFound
 		}
 
 		return uuid.Nil, fmt.Errorf("%s: %w", op, err)

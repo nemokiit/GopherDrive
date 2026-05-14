@@ -2,7 +2,7 @@ package transport
 
 import (
 	core_domain "GopherDrive/internal/core/domain"
-	core_errors "GopherDrive/internal/core/errors"
+	"GopherDrive/internal/core/repository/postgres/pool"
 	"GopherDrive/internal/pkg/api/logger"
 	"GopherDrive/internal/pkg/api/response"
 	"errors"
@@ -49,17 +49,17 @@ func (h *Handler) CreateFolder(w http.ResponseWriter, r *http.Request) {
 	createdFolder, err := h.service.CreateFolder(r.Context(), folder)
 	if err != nil {
 		switch {
-		case errors.Is(err, core_errors.ErrFolderAlreadyExists):
+		case errors.Is(err, pool.ErrFolderAlreadyExists):
 			log.Info("folder already exists", slog.String("name", folder.Name))
 
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("folder already exists"))
-		case errors.Is(err, core_errors.ErrUserNotFound):
+		case errors.Is(err, pool.ErrUserNotFound):
 			log.Info("user not found", slog.String("user_id", folder.UserID.String()))
 
 			render.Status(r, http.StatusUnauthorized)
 			render.JSON(w, r, response.Error("user account no longer exists"))
-		case errors.Is(err, core_errors.ErrParentFolderNotFound):
+		case errors.Is(err, pool.ErrParentFolderNotFound):
 			log.Info("parent folder not found", slog.String("folder_id", folder.ParentFolderID.String()))
 
 			render.Status(r, http.StatusBadRequest)

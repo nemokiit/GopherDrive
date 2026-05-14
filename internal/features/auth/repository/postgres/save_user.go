@@ -2,7 +2,7 @@ package postgres
 
 import (
 	core_domain "GopherDrive/internal/core/domain"
-	core_errors "GopherDrive/internal/core/errors"
+	"GopherDrive/internal/core/repository/postgres/pool"
 	"context"
 	"errors"
 	"fmt"
@@ -13,12 +13,12 @@ import (
 func (r *Repository) SaveUser(ctx context.Context, user core_domain.User) error {
 	const op = "auth.repository.CreateUser"
 
-	query := "INSERT INTO users (id, email, password_hash, created_at) VALUES ($1, $2)"
+	query := "INSERT INTO users (id, email, password_hash, created_at) VALUES ($1, $2, $3, $4)"
 	_, err := r.poolPG.Exec(ctx, query, user.ID, user.Email, user.PasswordHash, user.CreatedAt)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" {
-				return fmt.Errorf("%s: %w", op, core_errors.ErrUserNotFound)
+				return fmt.Errorf("%s: %w", op, pool.ErrUserNotFound)
 			}
 		}
 

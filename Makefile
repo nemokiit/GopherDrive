@@ -1,5 +1,9 @@
 -include .env
-PG_URL=postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:5432/$(POSTGRES_DB)?sslmode=disable
+export
+
+export PROJECT_ROOT=$(shell pwd)
+
+PG_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable
 MIGRATIONS_PATH=migrations
 
 migrate-up:
@@ -10,5 +14,8 @@ migrate-down:
 
 migrate-drop:
 	migrate -path $(MIGRATIONS_PATH) -database "$(PG_URL)" drop
+
+run:
+	go run cmd/gopher-drive/main.go
 
 .PHONY: migrate-create migrate-up migrate-down migrate-drop

@@ -1,4 +1,4 @@
-package s3
+package s3Client
 
 import (
 	"context"
@@ -6,26 +6,26 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
+	s3Config "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-func New(addr, user, password, bucketName string) (*s3.Client, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func New(ctx context.Context, config Config) (*s3.Client, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	credentialsProvider := credentials.NewStaticCredentialsProvider(user, password, "")
-	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithRegion("us-east-1"),
-		config.WithCredentialsProvider(credentialsProvider),
+	credentialsProvider := credentials.NewStaticCredentialsProvider(config.RootUser, config.RootPassword, "")
+	cfg, err := s3Config.LoadDefaultConfig(ctx,
+		s3Config.WithRegion(config.Region),
+		s3Config.WithCredentialsProvider(credentialsProvider),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load s3 config: %w", err)
 	}
 
 	s3Cli := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.BaseEndpoint = aws.String(addr)
+		o.BaseEndpoint = aws.String(config.Address)
 		o.UsePathStyle = true
 	})
 
@@ -39,7 +39,7 @@ func New(addr, user, password, bucketName string) (*s3.Client, error) {
 
 	exists := false
 	for _, bucket := range buckets.Buckets {
-		if aws.ToString(bucket.Name) == bucketName {
+		if aws.ToString(bucket.Name) == config.BucketName {
 			exists = true
 			break
 		}
@@ -47,7 +47,7 @@ func New(addr, user, password, bucketName string) (*s3.Client, error) {
 
 	if !exists {
 		_, err = s3Cli.CreateBucket(ctx, &s3.CreateBucketInput{
-			Bucket: aws.String(bucketName),
+			Bucket: aws.String(config.BucketName),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create bucket: %w", err)

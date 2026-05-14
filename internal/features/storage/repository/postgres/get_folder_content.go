@@ -2,7 +2,7 @@ package postgres
 
 import (
 	core_domain "GopherDrive/internal/core/domain"
-	core_errors "GopherDrive/internal/core/errors"
+	"GopherDrive/internal/core/repository/postgres/pool"
 	"context"
 	"errors"
 	"fmt"
@@ -64,7 +64,7 @@ func (r *Repository) GetFolderContent(
 
 	if len(folderContent.Files) == 0 && len(folderContent.Folders) == 0 && folderID != nil {
 		if ok, _ := r.folderExist(ctx, userID, folderID); !ok {
-			return folderContent, fmt.Errorf("%s: %w", op, core_errors.ErrFolderNotFound)
+			return folderContent, fmt.Errorf("%s: %w", op, pool.ErrFolderNotFound)
 		}
 	}
 

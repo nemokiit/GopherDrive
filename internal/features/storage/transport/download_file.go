@@ -1,7 +1,7 @@
 package transport
 
 import (
-	core_errors "GopherDrive/internal/core/errors"
+	"GopherDrive/internal/core/repository/postgres/pool"
 	"GopherDrive/internal/pkg/api/logger"
 	"GopherDrive/internal/pkg/api/response"
 	"errors"
@@ -37,7 +37,7 @@ func (h *Handler) DownloadFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	reader, file, err := h.service.DownloadFile(r.Context(), userID, fileID)
-	if errors.Is(err, core_errors.ErrFileNotFound) {
+	if errors.Is(err, pool.ErrFileNotFound) {
 		log.Info("file not found", slog.String("file_id", fileID.String()))
 
 		render.Status(r, http.StatusBadRequest)

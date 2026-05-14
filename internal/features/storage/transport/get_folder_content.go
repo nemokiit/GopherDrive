@@ -1,7 +1,7 @@
 package transport
 
 import (
-	core_errors "GopherDrive/internal/core/errors"
+	"GopherDrive/internal/core/repository/postgres/pool"
 	"GopherDrive/internal/pkg/api/logger"
 	"GopherDrive/internal/pkg/api/response"
 	"errors"
@@ -39,7 +39,7 @@ func (h *Handler) GetFolderContent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	folderContent, err := h.service.GetFolderContent(r.Context(), userID, folderID)
-	if errors.Is(err, core_errors.ErrFolderNotFound) {
+	if errors.Is(err, pool.ErrFolderNotFound) {
 		log.Info("folder not found", slog.Any("folder_id", folderID))
 
 		render.Status(r, http.StatusNotFound)

@@ -2,6 +2,7 @@ package transport
 
 import (
 	core_errors "GopherDrive/internal/core/errors"
+	"GopherDrive/internal/core/repository/postgres/pool"
 	"GopherDrive/internal/pkg/api/logger"
 	"GopherDrive/internal/pkg/api/response"
 	"errors"
@@ -43,7 +44,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	user, accessToken, refreshToken, err := h.service.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
-		if errors.Is(err, core_errors.ErrUserNotFound) {
+		if errors.Is(err, pool.ErrUserNotFound) {
 			log.Info("user not found", slog.String("email", req.Email))
 		} else if errors.Is(err, core_errors.ErrInvalidCredentials) {
 			log.Info("invalid password")

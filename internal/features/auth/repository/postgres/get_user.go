@@ -2,7 +2,7 @@ package postgres
 
 import (
 	core_domain "GopherDrive/internal/core/domain"
-	core_errors "GopherDrive/internal/core/errors"
+	"GopherDrive/internal/core/repository/postgres/pool"
 	"context"
 	"errors"
 	"fmt"
@@ -17,7 +17,7 @@ func (r *Repository) GetUserByEmail(ctx context.Context, email string) (user cor
 	err = r.poolPG.QueryRow(ctx, query, email).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return user, fmt.Errorf("%s: %w", op, core_errors.ErrUserNotFound)
+			return user, fmt.Errorf("%s: %w", op, pool.ErrUserNotFound)
 		}
 
 		return user, fmt.Errorf("%s: %w", op, err)

@@ -2,7 +2,7 @@ package transport
 
 import (
 	core_domain "GopherDrive/internal/core/domain"
-	mwAuth "GopherDrive/internal/core/middleware"
+	mwAuth "GopherDrive/internal/core/transport/http/middleware"
 	"GopherDrive/internal/pkg/api/logger"
 	"GopherDrive/internal/pkg/api/response"
 	"context"

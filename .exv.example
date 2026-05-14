@@ -1,5 +1,0 @@
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=your_password_here
-POSTGRES_DB=gopher_drive
-
-JWT_SECRET=secret_jwt_key

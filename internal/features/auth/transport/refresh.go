@@ -1,7 +1,7 @@
 package transport
 
 import (
-	core_errors "GopherDrive/internal/core/errors"
+	redis_error "GopherDrive/internal/core/repository/redis"
 	"GopherDrive/internal/pkg/api/logger"
 	"GopherDrive/internal/pkg/api/response"
 	"errors"
@@ -30,7 +30,7 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, accessToken, refreshToken, err := h.service.Refresh(r.Context(), cookieReq.Value)
-	if errors.Is(err, core_errors.ErrTokenNotFound) {
+	if errors.Is(err, redis_error.ErrTokenNotFound) {
 		log.Info("unauthorized refresh token")
 
 		deleteCookie := &http.Cookie{

@@ -2,7 +2,7 @@ package postgres
 
 import (
 	core_domain "GopherDrive/internal/core/domain"
-	core_errors "GopherDrive/internal/core/errors"
+	"GopherDrive/internal/core/repository/postgres/pool"
 	"context"
 	"errors"
 	"fmt"
@@ -19,7 +19,7 @@ func (r *Repository) GetFileByID(ctx context.Context, userID, fileID uuid.UUID) 
 
 	err = fillFile(&file, row)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return file, fmt.Errorf("%s: %w", op, core_errors.ErrFileNotFound)
+		return file, fmt.Errorf("%s: %w", op, pool.ErrFileNotFound)
 	}
 	if err != nil {
 		return file, fmt.Errorf("%s: %w", op, err)

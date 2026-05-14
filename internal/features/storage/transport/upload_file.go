@@ -3,6 +3,7 @@ package transport
 import (
 	core_domain "GopherDrive/internal/core/domain"
 	core_errors "GopherDrive/internal/core/errors"
+	"GopherDrive/internal/core/repository/postgres/pool"
 	"GopherDrive/internal/pkg/api/logger"
 	"GopherDrive/internal/pkg/api/response"
 	"context"
@@ -68,17 +69,17 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error("failed to upload file"))
-		case errors.Is(err, core_errors.ErrFileAlreadyExists):
+		case errors.Is(err, pool.ErrFileAlreadyExists):
 			log.Info("file already exists", slog.String("name", file.Name))
 
 			render.Status(r, http.StatusConflict)
 			render.JSON(w, r, response.Error("file already exists"))
-		case errors.Is(err, core_errors.ErrUserNotFound):
+		case errors.Is(err, pool.ErrUserNotFound):
 			log.Info("user not found", slog.String("user_id", file.UserID.String()))
 
 			render.Status(r, http.StatusUnauthorized)
 			render.JSON(w, r, response.Error("user account no longer exists"))
-		case errors.Is(err, core_errors.ErrFolderNotFound):
+		case errors.Is(err, pool.ErrFolderNotFound):
 			log.Info("folder not found", slog.String("folder_id", file.FolderID.String()))
 
 			render.Status(r, http.StatusNotFound)

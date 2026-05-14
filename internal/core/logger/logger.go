@@ -3,6 +3,7 @@ package logger
 import (
 	"log/slog"
 	"os"
+	"strings"
 )
 
 const (
@@ -11,17 +12,15 @@ const (
 	envProd  = "prod"
 )
 
-func SetupLogger(env string) *slog.Logger {
-	var log *slog.Logger
-
-	switch env {
+func SetupLogger(config Config) (log *slog.Logger) {
+	switch strings.ToLower(config.Env) {
 	case envLocal:
 		log = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	default:
 		log = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	}
 
-	log = log.With(slog.String("env", env))
+	log = log.With(slog.String("env", strings.ToLower(config.Env)))
 
 	return log
 }

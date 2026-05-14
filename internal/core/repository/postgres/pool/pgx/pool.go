@@ -1,4 +1,4 @@
-package postgres
+package pgx
 
 import (
 	"context"
@@ -8,11 +8,19 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func New(connString string) (*pgxpool.Pool, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func New(ctx context.Context, config Config) (pool *pgxpool.Pool, err error) {
+	connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		config.User,
+		config.Password,
+		config.Host,
+		config.Port,
+		config.Database,
+	)
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	pool, err := pgxpool.New(ctx, connString)
+	pool, err = pgxpool.New(ctx, connString)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create connection pool: %w", err)
 	}

@@ -1,4 +1,4 @@
-package redis
+package redisClient
 
 import (
 	"context"
@@ -8,13 +8,13 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func New(addr, pass string) (*redis.Client, error) {
+func New(ctx context.Context, config Config) (*redis.Client, error) {
 	redisCli := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: pass,
+		Addr:     config.Address,
+		Password: config.Password,
 	})
 
-	ctxPing, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctxPing, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
 	if err := redisCli.Ping(ctxPing).Err(); err != nil {

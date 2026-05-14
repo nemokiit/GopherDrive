@@ -1,7 +1,7 @@
 package transport
 
 import (
-	core_errors "GopherDrive/internal/core/errors"
+	"GopherDrive/internal/core/repository/postgres/pool"
 	"GopherDrive/internal/pkg/api/logger"
 	"GopherDrive/internal/pkg/api/response"
 	"errors"
@@ -42,7 +42,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	log.Info("request body decoded", slog.Any("email", req.Email))
 
 	user, accessToken, refreshToken, err := h.service.Register(r.Context(), req.Email, req.Password)
-	if errors.Is(err, core_errors.ErrUserAlreadyExists) {
+	if errors.Is(err, pool.ErrUserAlreadyExists) {
 		log.Info("user already exists", slog.String("email", req.Email))
 
 		render.Status(r, http.StatusConflict)
