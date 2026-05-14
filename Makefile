@@ -6,6 +6,12 @@ export PROJECT_ROOT=$(shell pwd)
 PG_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable
 MIGRATIONS_PATH=migrations
 
+env-up:
+	docker-compose up -d postgres redis minio
+
+env-down:
+	docker-compose down
+
 migrate-up:
 	migrate -path $(MIGRATIONS_PATH) -database "$(PG_URL)" up
 
